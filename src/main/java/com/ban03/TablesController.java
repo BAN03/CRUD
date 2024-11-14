@@ -17,16 +17,10 @@ public class TablesController {
     TableView<DataRow> tableView = new TableView<>();
     private String table;
     private String SQL_SELECT;
-    private String SQL_INSERT;
-    private String SQL_UPDATE = "UPDATE persona SET nombre=?, apellido=?, email=?, telefono=? WHERE id_persona=?";
-    private String SQL_DELETE = "DELETE FROM persona WHERE id_persona=?";
 
     public TablesController(String table) {
         this.table = table;
         this.SQL_SELECT = "SELECT * FROM " + this.table;
-        this.SQL_INSERT = "INSERT INTO "
-                + table
-                + " (nombre, apellido, email, telefono) VALUES (?,?,?,?)";
     }
 
     public static class DataRow {
@@ -73,9 +67,7 @@ public class TablesController {
                                 + metaData.getColumnName(event.getTablePosition().getColumn() + 1) + " = "
                                 + "'" + event.getNewValue() + "'" + " WHERE " + metaData.getColumnName(1) + " = "
                                 + event.getRowValue().getValues().get(0).getValue();
-                        System.out.println(query);
-                        // new DBConecction().DBC().createStatement().execute(query);
-                        new DBConecction().DBC().createStatement().executeUpdate(query);
+                        new DBConecction().DBC().createStatement().execute(query);
                     } catch (SQLException e) {
                         System.out.println(e.getMessage());
                     }
@@ -91,9 +83,24 @@ public class TablesController {
                 data.add(new DataRow(rowValues));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.out.println(e.getMessage());
         }
         return data;
+    }
+
+    @FXML
+    public void eliminar() {
+
+        String query = "DELETE FROM " + this.table + " WHERE " + this.tableView.getColumns().get(0).getText() + " = "
+                + this.tableView.getSelectionModel().getSelectedItems().get(0).getValues().get(0).getValue();
+        System.out.println(this.tableView.getSelectionModel().getSelectedCells().remove(0));
+        /*
+        try {
+            new DBConecction().DBC().createStatement().execute(query);
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+        */
     }
 
     @FXML
