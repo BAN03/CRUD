@@ -8,6 +8,8 @@ import javafx.fxml.FXML;
 import javafx.collections.FXCollections;
 import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.TextFieldTableCell;
+
 import java.sql.*;
 
 public class TablesController {
@@ -20,9 +22,13 @@ public class TablesController {
     private String SQL_DELETE = "DELETE FROM persona WHERE id_persona=?";
 
     public static class DataRow {
-        private final ObservableList<SimpleStringProperty> values;
+        private ObservableList<SimpleStringProperty> values;
 
         public DataRow(ObservableList<SimpleStringProperty> values) {
+            this.values = values;
+        }
+
+        public void setValues(ObservableList<SimpleStringProperty> values) {
             this.values = values;
         }
 
@@ -33,16 +39,17 @@ public class TablesController {
 
     public TablesController(String table) {
         this.table = table;
-        this.SQL_SELECT = "SELECT * FROM " + table;
-        // this.SQL_INSERT = "INSERT INTO " + table + " (nombre, apellido, email,
-        // telefono) VALUES (?,?,?,?)";
+        this.SQL_SELECT = "SELECT * FROM " + this.table;
+        this.SQL_INSERT = "INSERT INTO "
+                + table
+                + " (nombre, apellido, email, telefono) VALUES (?,?,?,?)";
     }
 
     @FXML
     public void initialize() {
         ObservableList<DataRow> data = getDataFromDatabase(tableView);
-        tableView.setItems(data);
         tableView.setEditable(true);
+        tableView.setItems(data);
     }
 
     private ObservableList<DataRow> getDataFromDatabase(TableView<DataRow> tableView) {
@@ -50,7 +57,7 @@ public class TablesController {
         try (
                 Connection conn = new DBConecction().DBC();
                 Statement statement = conn.createStatement();
-                ResultSet resultSet = statement.executeQuery("SELECT * FROM " + this.table)) {
+                ResultSet resultSet = statement.executeQuery(this.SQL_SELECT)) {
             ResultSetMetaData metaData = resultSet.getMetaData();
             int columnCount = metaData.getColumnCount();
             for (int i = 1; i <= columnCount; i++) {
@@ -58,9 +65,13 @@ public class TablesController {
                 TableColumn<DataRow, String> column = new TableColumn<>(metaData.getColumnName(i));
                 column.setCellValueFactory(
                         cellData -> cellData.getValue().getValues().get(columnIndex));
+                column.setCellFactory(TextFieldTableCell.forTableColumn());
                 column.setOnEditCommit(event -> {
                     DataRow dataRow = event.getRowValue();
-                    dataRow.getValues();
+                    System.out.println(event.getNewValue() + " " + event.getRowValue().getValues());
+                    System.out.println(
+                            event.getTableColumn().getCellData(dataRow) + " " + event.getTablePosition().getColumn());
+                    // dataRow.setValues(event.getNewValue());
                 });
                 tableView.getColumns().add(column);
             }
