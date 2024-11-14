@@ -21,6 +21,14 @@ public class TablesController {
     private String SQL_UPDATE = "UPDATE persona SET nombre=?, apellido=?, email=?, telefono=? WHERE id_persona=?";
     private String SQL_DELETE = "DELETE FROM persona WHERE id_persona=?";
 
+    public TablesController(String table) {
+        this.table = table;
+        this.SQL_SELECT = "SELECT * FROM " + this.table;
+        this.SQL_INSERT = "INSERT INTO "
+                + table
+                + " (nombre, apellido, email, telefono) VALUES (?,?,?,?)";
+    }
+
     public static class DataRow {
         private ObservableList<SimpleStringProperty> values;
 
@@ -37,22 +45,14 @@ public class TablesController {
         }
     }
 
-    public TablesController(String table) {
-        this.table = table;
-        this.SQL_SELECT = "SELECT * FROM " + this.table;
-        this.SQL_INSERT = "INSERT INTO "
-                + table
-                + " (nombre, apellido, email, telefono) VALUES (?,?,?,?)";
-    }
-
     @FXML
-    public void initialize() {
+    public void initialize() throws SQLException {
         ObservableList<DataRow> data = getDataFromDatabase(tableView);
         tableView.setEditable(true);
         tableView.setItems(data);
     }
 
-    private ObservableList<DataRow> getDataFromDatabase(TableView<DataRow> tableView) {
+    private ObservableList<DataRow> getDataFromDatabase(TableView<DataRow> tableView) throws SQLException {
         ObservableList<DataRow> data = FXCollections.observableArrayList();
         try (
                 Connection conn = new DBConecction().DBC();
@@ -68,9 +68,17 @@ public class TablesController {
                 column.setCellFactory(TextFieldTableCell.forTableColumn());
                 column.setOnEditCommit(event -> {
                     DataRow dataRow = event.getRowValue();
-                    System.out.println(event.getNewValue() + " " + event.getRowValue().getValues());
-                    System.out.println(
-                            event.getTableColumn().getCellData(dataRow) + " " + event.getTablePosition().getColumn());
+                    try {
+                        String query = "UPDATE " + this.table + " SET "
+                                + metaData.getColumnName(event.getTablePosition().getColumn() + 1) + " = "
+                                + "'" + event.getNewValue() + "'" + " WHERE " + metaData.getColumnName(1) + " = "
+                                + event.getRowValue().getValues().get(0).getValue();
+                        System.out.println(query);
+                        // new DBConecction().DBC().createStatement().execute(query);
+                        new DBConecction().DBC().createStatement().executeUpdate(query);
+                    } catch (SQLException e) {
+                        System.out.println(e.getMessage());
+                    }
                     // dataRow.setValues(event.getNewValue());
                 });
                 tableView.getColumns().add(column);
