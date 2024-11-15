@@ -1,7 +1,6 @@
 package com.ban03;
 
 import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -15,6 +14,7 @@ import java.sql.*;
 public class TablesController {
     @FXML
     TableView<DataRow> tableView = new TableView<>();
+    private ObservableList<DataRow> data;
     private String table;
     private String SQL_SELECT;
 
@@ -41,13 +41,13 @@ public class TablesController {
 
     @FXML
     public void initialize() throws SQLException {
-        ObservableList<DataRow> data = getDataFromDatabase(tableView);
+        this.data = FXCollections.observableArrayList();
         tableView.setEditable(true);
-        tableView.setItems(data);
+        cargar();
     }
 
-    private ObservableList<DataRow> getDataFromDatabase(TableView<DataRow> tableView) throws SQLException {
-        ObservableList<DataRow> data = FXCollections.observableArrayList();
+    private void cargar() throws SQLException {
+        data.clear();
         try (
                 Connection conn = new DBConecction().DBC();
                 Statement statement = conn.createStatement();
@@ -61,7 +61,6 @@ public class TablesController {
                         cellData -> cellData.getValue().getValues().get(columnIndex));
                 column.setCellFactory(TextFieldTableCell.forTableColumn());
                 column.setOnEditCommit(event -> {
-                    DataRow dataRow = event.getRowValue();
                     try {
                         String query = "UPDATE " + this.table + " SET "
                                 + metaData.getColumnName(event.getTablePosition().getColumn() + 1) + " = "
@@ -71,7 +70,6 @@ public class TablesController {
                     } catch (SQLException e) {
                         System.out.println(e.getMessage());
                     }
-                    // dataRow.setValues(event.getNewValue());
                 });
                 tableView.getColumns().add(column);
             }
@@ -85,22 +83,20 @@ public class TablesController {
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
-        return data;
+        tableView.setItems(data);
     }
 
     @FXML
     public void eliminar() {
 
         String query = "DELETE FROM " + this.table + " WHERE " + this.tableView.getColumns().get(0).getText() + " = "
-                + this.tableView.getSelectionModel().getSelectedItems().get(0).getValues().get(0).getValue();
-        System.out.println(this.tableView.getSelectionModel().getSelectedCells().remove(0));
-        /*
+                + this.tableView.getSelectionModel().getSelectedItem().getValues().get(0).getValue();
         try {
             new DBConecction().DBC().createStatement().execute(query);
+            cargar();
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
-        */
     }
 
     @FXML
