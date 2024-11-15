@@ -7,20 +7,35 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.ChoiceBox;
 import javafx.stage.Stage;
+
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class GUIController {
 
     private String selected_table = null;
     Stage hola = new Stage();
-    private Stage[] escenas = new Stage[5];
+    private Stage[] escenas;
     @FXML
     private ChoiceBox<String> tablas = new ChoiceBox<>();
 
     @FXML
     public void initialize() {
-        tablas.getItems().addAll(
-                "categorias", "clientes", "detalles_pedido", "pedidos", "productos");
+        try {
+
+            ResultSet tables = new DBConecction().DBC().createStatement().executeQuery("SHOW TABLES");
+            int tableCount = 0;
+            while (tables.next()) {
+                tablas.getItems().add(tables.getString(1));
+                tableCount++;
+            }
+            this.escenas = new Stage[tableCount];
+
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+        // tablas.getItems().addAll("categorias", "clientes", "detalles_pedido",
+        // "pedidos", "productos");
         tablas.getSelectionModel().selectedItemProperty().addListener((v, oldValue, newValue) -> {
             this.selected_table = newValue;
         });
