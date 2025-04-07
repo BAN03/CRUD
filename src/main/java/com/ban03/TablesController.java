@@ -49,6 +49,7 @@ public class TablesController {
     private void cargar() throws SQLException {
         data.clear();
         tableView.getColumns().clear();
+        this.columnNames = "";
         try (
                 Connection conn = new DBConecction().DBC();
                 Statement statement = conn.createStatement();
